@@ -1,13 +1,12 @@
-package com.myproject.spark;
+// SparkConfig.java
+package com.myproject.config;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("!test")
 public class SparkConfig {
 
     @Bean
@@ -22,4 +21,3 @@ public class SparkConfig {
                 .getOrCreate();
     }
 }
-
