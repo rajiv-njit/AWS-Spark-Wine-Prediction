@@ -1,8 +1,5 @@
 package com.myproject;
 
-import com.myproject.config.AppConfig;
-import com.myproject.ml.LinearRegressionModel;
-import com.myproject.ml.LogisticRegressionModel;
 import com.myproject.ml.WineQualityPredictor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -22,15 +19,6 @@ public class Application {
     @Autowired
     private WineQualityPredictor wineQualityPredictor;
 
-    @Autowired
-    private LinearRegressionModel linearRegressionModel;
-
-    @Autowired
-    private LogisticRegressionModel logisticRegressionModel;
-
-    @Autowired
-    private AppConfig appConfig;
-
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
@@ -40,20 +28,14 @@ public class Application {
         return args -> {
             System.out.println("Application Started...");
 
-            // Use AppConfig to set the S3Client
-            appConfig.setS3Client(s3Client);
-
-            // Use AppConfig to get the SparkSession
-            SparkSession sparkSession = appConfig.sparkSession();
-
             // Load the training dataset
-            Dataset<Row> trainingData = sparkSession.read().format("csv").option("header", "true").load("path_to_training_data.csv");
+            Dataset<Row> trainingData = spark.read().format("csv").option("header", "true").load("path_to_training_data.csv");
 
             // Train all the models
             wineQualityPredictor.trainModels(trainingData);
 
             // Use the trained models for prediction
-            Dataset<Row> testData = sparkSession.read().format("csv").option("header", "true").load("path_to_test_data.csv");
+            Dataset<Row> testData = spark.read().format("csv").option("header", "true").load("path_to_test_data.csv");
 
             Dataset<Row> regressionPredictions = wineQualityPredictor.predictRegression(testData);
             Dataset<Row> linearRegressionPredictions = wineQualityPredictor.predictLinearRegression(testData);
