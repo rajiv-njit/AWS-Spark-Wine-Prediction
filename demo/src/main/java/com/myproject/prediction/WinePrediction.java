@@ -1,19 +1,23 @@
 package com.myproject.prediction;
 
+import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class WinePredictionController {
+@RequestMapping("/wine-prediction")
+public class WinePrediction {
 
-    private final WinePredictionService predictionService;
+    private final WinePredictionModel predictionModel;
 
     @Autowired
-    public WinePredictionController(WinePredictionService predictionService) {
-        this.predictionService = predictionService;
+    public WinePrediction(WinePredictionModel predictionModel) {
+        this.predictionModel = predictionModel;
     }
 
     @GetMapping("/predict")
@@ -28,7 +32,7 @@ public class WinePredictionController {
         Dataset<Row> newData = loadNewDataForPrediction();
 
         // Call the predict method from the service
-        return predictionService.predictWineQuality(newData);
+        return predictionModel.predictWineQuality(newData);
     }
 
     // This is just a placeholder method; you should replace it with your actual data loading logic
@@ -39,5 +43,20 @@ public class WinePredictionController {
     }
 }
 
+@Service
+class WinePredictionModel {
 
+    private final PipelineModel model;
 
+    @Autowired
+    public WinePredictionModel(PipelineModel model) {
+        this.model = model;
+    }
+
+    public Dataset<Row> predictWineQuality(Dataset<Row> inputData) {
+        // Call the predict method of the WinePredictionModel
+        return model.transform(inputData);
+    }
+
+    // You can add more methods or functionality as needed for your model
+}
