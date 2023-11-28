@@ -67,9 +67,4 @@ public class Application {
             System.out.println("Application Completed.");
         };
     }
-
-    @Bean
-    public SparkSession myCustomSparkSession() {
-        return appConfig.sparkSession();
-    }
 }

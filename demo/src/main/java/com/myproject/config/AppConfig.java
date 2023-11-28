@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 
 @org.springframework.context.annotation.Configuration
 @PropertySource("classpath:application.properties")
+@ComponentScan(basePackages = "com.myproject.config")
 public class AppConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
@@ -112,7 +113,6 @@ public class AppConfig {
         return s3Client;
     }
 
-
     // Add this method to set S3Client
     public void setS3Client(S3Client s3Client) {
         this.s3Client = s3Client;
@@ -129,16 +129,34 @@ public class AppConfig {
     private void setHadoopConfigurations(SparkSession spark) {
         LOGGER.info("Setting Hadoop Configurations...");
         Configuration hadoopConfig = spark.sparkContext().hadoopConfiguration();
+
+        // Set the Hadoop native library directory
+        String hadoopNativeLibDir = "/Users/rajivkumar/Desktop/hadoop-3.3.4/lib/native";
+        System.setProperty("hadoop.native.lib.dir", hadoopNativeLibDir);
+
+        // Log the path
+        LOGGER.info("Hadoop native library directory: {}", hadoopNativeLibDir);
+
         hadoopConfig.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
+
+        // Retrieve AWS credentials from environment variables
+        AwsCredentialsProvider awsCredentialsProvider = awsCredentialsProvider();
+
+        // Set AWS access key and secret key from the credentials provider
+        hadoopConfig.set("fs.s3a.access.key", awsCredentialsProvider.resolveCredentials().accessKeyId());
+        hadoopConfig.set("fs.s3a.secret.key", awsCredentialsProvider.resolveCredentials().secretAccessKey());
+
+        hadoopConfig.set("fs.s3a.multiobjectdelete.enable", "false");
+        hadoopConfig.set("fs.s3a.connection.maximum", "1000");
         LOGGER.info("Hadoop Configurations set successfully.");
     }
 
     private void setAWSCredentials(SparkSession spark) {
         LOGGER.info("Setting AWS Credentials...");
-        
+
         try {
-        AwsCredentialsProvider awsCredentialsProvider = awsCredentialsProvider();
-        // Print AWS credentials for debugging
+            AwsCredentialsProvider awsCredentialsProvider = awsCredentialsProvider();
+            // Print AWS credentials for debugging
             LOGGER.info("Access Key ID: {}", awsCredentialsProvider.resolveCredentials().accessKeyId());
             LOGGER.info("Secret Access Key: {}", awsCredentialsProvider.resolveCredentials().secretAccessKey());
             spark.conf().set("spark.hadoop.fs.s3a.access.key", awsCredentialsProvider.resolveCredentials().accessKeyId());
@@ -147,10 +165,10 @@ public class AppConfig {
             spark.conf().set("spark.hadoop.fs.s3a.multiobjectdelete.enable", "false");
             spark.conf().set("spark.hadoop.fs.s3a.connection.maximum", "1000");
             LOGGER.info("AWS Credentials set successfully.");
-            } catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("Failed to load AWS credentials: " + e.getMessage());
             System.err.println("Exiting application...");
             System.exit(1);
-    }
+        }
     }
 }
