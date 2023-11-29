@@ -12,7 +12,7 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <spring.boot.version>2.7.1</spring.boot.version>
+        <spring.boot.version>2.7.4</spring.boot.version>
         <spark.version>3.5.0</spark.version>
     </properties>
 
@@ -53,6 +53,14 @@
             <artifactId>spark-sql_2.12</artifactId>
             <version>3.5.0</version>
         </dependency>
+
+        <!-- AWS SDK dependencies -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.21.0</version>
+          </dependency>
+             
     </dependencies>
 
     <build>
@@ -69,6 +77,12 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Add or modify the Maven Dependency Plugin -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.0.0</version>
+        </plugin>
         </plugins>
     </build>
 

@@ -1,0 +1,22 @@
+{"properties": [
+  {
+    "name": "aws.region",
+    "type": "java.lang.String",
+    "description": "A description for 'aws.region'"
+  },
+  {
+    "name": "spark.app.name",
+    "type": "java.lang.String",
+    "description": "A description for 'spark.app.name'"
+  },
+  {
+    "name": "spark.master",
+    "type": "java.lang.String",
+    "description": "A description for 'spark.master'"
+  },
+  {
+    "name": "spark.hadoop.library.path",
+    "type": "java.lang.String",
+    "description": "A description for 'spark.hadoop.library.path'"
+  }
+]}

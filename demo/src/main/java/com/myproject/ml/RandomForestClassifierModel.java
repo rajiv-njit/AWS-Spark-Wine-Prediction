@@ -1,43 +1,54 @@
 package com.myproject.ml;
+
+import org.apache.spark.ml.Pipeline;
+import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.classification.RandomForestClassifier;
-import org.apache.spark.ml.classification.RandomForestClassificationModel;
+import org.apache.spark.ml.feature.StringIndexer;
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Component
 public class RandomForestClassifierModel {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RandomForestClassifierModel.class);
 
-    private final RandomForestClassificationModel model;
+    public static PipelineModel trainModel(Dataset<Row> trainingData) {
+        try {
+            // Assuming the label column is "label"
+            String labelCol = "label";
 
-    // Constructor without Dataset injection
-    public RandomForestClassifierModel() {
-        this.model = null;  // You might initialize it differently based on your logic
-    }
+            // Create a vector assembler
+            VectorAssembler assembler = new VectorAssembler()
+                    .setInputCols(trainingData.columns())
+                    .setOutputCol("features");
 
-    // Constructor with Dataset injection
-    public RandomForestClassifierModel(Dataset<Row> trainingData) {
-        this.model = trainRandomForestClassifierModel(trainingData);
-    }
+            Dataset<Row> assembledData = assembler.transform(trainingData);
 
-    public Dataset<Row> predict(Dataset<Row> data) {
-        if (model == null) {
-            throw new IllegalStateException("Model is not trained. Please provide training data first.");
+            // Create a Random Forest Classifier model
+            RandomForestClassifier randomForestClassifier = new RandomForestClassifier()
+                    .setLabelCol(labelCol)
+                    .setFeaturesCol("features")
+                    .setNumTrees(21)
+                    .setFeatureSubsetStrategy("auto")
+                    .setImpurity("gini")
+                    .setMaxDepth(30)
+                    .setMaxBins(32);
+
+            // Create a pipeline
+            Pipeline pipeline = new Pipeline()
+                    .setStages(new PipelineStage[]{
+                            new StringIndexer().setInputCol("label").setOutputCol("indexedLabel"),
+                            new StringIndexer().setInputCol("features").setOutputCol("indexedFeatures"),
+                            randomForestClassifier
+                    });
+
+            // Train the model
+            return pipeline.fit(assembledData);
+        } catch (Exception e) {
+            LOGGER.error("Error training Random Forest Classifier model: {}", e.getMessage(), e);
+            throw new RuntimeException("Error training Random Forest Classifier model", e);
         }
-        return model.transform(data);
-    }
-
-    private RandomForestClassificationModel trainRandomForestClassifierModel(Dataset<Row> trainingData) {
-        RandomForestClassifier rf = new RandomForestClassifier()
-                .setLabelCol("quality")
-                .setFeaturesCol("features")
-                .setNumTrees(10);
-
-        return rf.fit(trainingData);
-    }
-
-    // Getter for the model
-    public RandomForestClassificationModel getModel() {
-        return model;
     }
 }
