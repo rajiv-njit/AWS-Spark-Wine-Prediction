@@ -41,22 +41,22 @@ public class WinePrediction {
         // For example, load from a database or another data source
         return null; // Replace this with your actual implementation
     }
-}
 
-@Service
-class WinePredictionModel {
+    @Service
+    public static class WinePredictionModel {
 
-    private final PipelineModel model;
+        private final PipelineModel model;
 
-    @Autowired
-    public WinePredictionModel(PipelineModel model) {
-        this.model = model;
+        @Autowired
+        public WinePredictionModel(PipelineModel model) {
+            this.model = model;
+        }
+
+        public Dataset<Row> predictWineQuality(Dataset<Row> inputData) {
+            // Call the transform method of the PipelineModel to make predictions
+            return model.transform(inputData);
+        }
+
+        // You can add more methods or functionality as needed for your model
     }
-
-    public Dataset<Row> predictWineQuality(Dataset<Row> inputData) {
-        // Call the predict method of the WinePredictionModel
-        return model.transform(inputData);
-    }
-
-    // You can add more methods or functionality as needed for your model
 }

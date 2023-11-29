@@ -1,8 +1,12 @@
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+package com.myproject.config;
+
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.regions.Region;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,26 +28,26 @@ public class AwsConfig {
     private String secretKey;
 
     @Bean
-    public AmazonS3 amazonS3Client() {
-        AmazonS3 s3Client;
+    public S3Client s3Client() {
+        S3Client s3Client;
 
         if (accessKeyId != null && secretKey != null) {
             // Use explicit credentials if available
-            AWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, secretKey);
-            AWSStaticCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
+            AwsCredentials awsCredentials = AwsBasicCredentials.create(accessKeyId, secretKey);
+            AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(awsCredentials);
 
-            s3Client = AmazonS3ClientBuilder.standard()
-                    .withCredentials(credentialsProvider)
-                    .withRegion(region)
+            s3Client = S3Client.builder()
+                    .region(Region.of(region))
+                    .credentialsProvider(credentialsProvider)
                     .build();
         } else {
             // Use default credentials provider
-            s3Client = AmazonS3ClientBuilder.standard()
-                    .withRegion(region)
+            s3Client = S3Client.builder()
+                    .region(Region.of(region))
                     .build();
         }
 
-        LOGGER.info("AmazonS3 client created successfully.");
+        LOGGER.info("Amazon S3 client created successfully.");
 
         return s3Client;
     }

@@ -17,11 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping("/model-training")
 public class ModelTraining {
 
-    private final ModelTraining trainingModel;  // Renamed the field
-
     @Autowired
-    public ModelTraining(ModelTraining trainingModel) {
-        this.trainingModel = trainingModel;
+    public ModelTraining() {
+        // Constructor logic, if needed
     }
 
     @PostMapping("/start")
@@ -31,7 +29,7 @@ public class ModelTraining {
         Dataset<Row> trainingData = loadTrainingData();
 
         // Start the training process
-        trainModel(trainingData);
+        trainLinearRegressionModel(trainingData);
 
         return "Training started successfully";
     }
@@ -43,7 +41,7 @@ public class ModelTraining {
         return null; // Replace this with your actual implementation
     }
 
-    private void trainModel(Dataset<Row> trainingData) {
+    private void trainLinearRegressionModel(Dataset<Row> trainingData) {
         // Assuming features are in columns "fixed acidity" to "alcohol"
         String[] featureColumns = {"fixed acidity", "volatile acidity", "citric acid", "residual sugar", "chlorides",
                 "free sulfur dioxide", "total sulfur dioxide", "density", "pH", "sulphates", "alcohol"};

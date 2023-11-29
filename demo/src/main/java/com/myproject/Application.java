@@ -1,9 +1,15 @@
 package com.myproject;
 
+import com.myproject.config.AppConfig;
 import com.myproject.ml.WineQualityPredictor;
+import com.myproject.ml.LinearRegressionModel;
+import com.myproject.ml.LogisticRegressionModel;
+import com.myproject.data.DatasetLoader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,8 +22,19 @@ import software.amazon.awssdk.services.s3.S3Client;
 @ComponentScan(basePackages = "com.myproject")
 public class Application {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
+
     @Autowired
     private WineQualityPredictor wineQualityPredictor;
+
+    @Autowired
+    private LinearRegressionModel linearRegressionModel;
+
+    @Autowired
+    private LogisticRegressionModel logisticRegressionModel;
+
+    @Autowired
+    private AppConfig appConfig;
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -26,16 +43,16 @@ public class Application {
     @Bean
     public CommandLineRunner commandLineRunner(S3Client s3Client, SparkSession spark) {
         return args -> {
-            System.out.println("Application Started...");
+            LOGGER.info("Application Started...");
 
             // Load the training dataset
-            Dataset<Row> trainingData = spark.read().format("csv").option("header", "true").load("path_to_training_data.csv");
+            Dataset<Row> trainingData = DatasetLoader.loadTrainingDataset(spark);
 
             // Train all the models
             wineQualityPredictor.trainModels(trainingData);
 
             // Use the trained models for prediction
-            Dataset<Row> testData = spark.read().format("csv").option("header", "true").load("path_to_test_data.csv");
+            Dataset<Row> testData = DatasetLoader.loadValidationDataset(spark);
 
             Dataset<Row> regressionPredictions = wineQualityPredictor.predictRegression(testData);
             Dataset<Row> linearRegressionPredictions = wineQualityPredictor.predictLinearRegression(testData);
@@ -46,7 +63,7 @@ public class Application {
             linearRegressionPredictions.show();
             logisticRegressionPredictions.show();
 
-            System.out.println("Application Completed.");
+            LOGGER.info("Application Completed.");
         };
     }
 }

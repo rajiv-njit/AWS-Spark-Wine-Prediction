@@ -15,13 +15,27 @@ public class SparkConfig {
     @Value("${spark.master}")
     private String master;
 
+    @Value("${aws_access_key_id:#{null}}")
+    private String accessKeyId;
+
+    @Value("${aws_secret_access_key:#{null}}")
+    private String secretKey;
+
     @Bean
     public SparkConf sparkConf() {
-        return new SparkConf()
+        SparkConf sparkConf = new SparkConf()
                 .setAppName(appName)
                 .setMaster(master)
                 .set("spark.driver.bindAddress", "127.0.0.1")
                 .set("spark.driver.port", "7077");
+
+        if (accessKeyId != null && secretKey != null) {
+            // If explicit credentials are provided, set them for S3
+            sparkConf.set("spark.hadoop.fs.s3a.access.key", accessKeyId)
+                     .set("spark.hadoop.fs.s3a.secret.key", secretKey);
+        }
+
+        return sparkConf;
     }
 
     @Bean
