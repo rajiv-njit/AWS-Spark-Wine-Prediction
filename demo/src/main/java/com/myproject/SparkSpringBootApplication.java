@@ -47,6 +47,12 @@ public class SparkSpringBootApplication implements CommandLineRunner {
     static final String COLUMN_SCORE_2 = "score2";
     static final String COLUMN_PREDICTION = "result";
     static final String COLUMN_INPUT_FEATURES = "inputFeatures";
+    private long truePositives;
+    private long falsePositives;
+    private long falseNegatives;
+    private double precision;
+    private double recall;
+    private double fScore;
 
     public static void main(String[] args) {
         SpringApplication.run(SparkSpringBootApplication.class, args);
@@ -79,6 +85,12 @@ Dataset<Row> validationDataSet = sparkSession.read()
 // Manually remove extra quotes from the header
 validationDataSet = fixCsvHeader(validationDataSet);
 
+  // Log the number of records in training and validation datasets
+  long trainingRecords = trainingDataSet.count();
+  long validationRecords = validationDataSet.count();
+  System.out.println("Number of records in Training Dataset: " + trainingRecords);
+  System.out.println("Number of records in Validation Dataset: " + validationRecords);
+
 
     // Feature engineering: Create inputFeatures column
     org.apache.spark.ml.feature.VectorAssembler vectorAssembler = new org.apache.spark.ml.feature.VectorAssembler()
@@ -109,6 +121,19 @@ validationDataSet = fixCsvHeader(validationDataSet);
     JavaPairRDD<Double, Double> validationPredictionRDD = convertToJavaRDDPair(validationDataSetPredictions);
     AppConfig.printFScoreBinaryClassfication(validationPredictionRDD);
 
+    // Log results and summary
+    System.out.println("Summary of Logistic Regression Model Training:");
+    System.out.println("Number of iterations: " + logisticRegressionTrainingSummary.totalIterations());
+    System.out.println("Objective history: " + Arrays.toString(logisticRegressionTrainingSummary.objectiveHistory()));
+
+    // Log F-score for binary classification
+    System.out.println("F-score for Binary Classification:");
+    AppConfig.printFScoreBinaryClassfication(validationPredictionRDD);
+
+    // Log results in prediction.html
+    logResultsToHtml(validationPredictionRDD, trainingRecords, validationRecords);
+
+
     sparkSession.stop();
 }
 
@@ -124,6 +149,39 @@ validationDataSet = fixCsvHeader(validationDataSet);
             columns[i] = columns[i].replaceAll("\"", "");
         }
         return dataSet.toDF(columns);
+    }
+
+    private void logResultsToHtml(JavaPairRDD<Double, Double> validationPredictionRDD, long trainingRecords,
+            long validationRecords) {
+        // Prepare HTML content
+        StringBuilder htmlContent = new StringBuilder("<html><body>");
+        htmlContent.append("<h2>Spark Model Prediction Results Summary</h2>");
+        htmlContent.append("<p>Number of records in Training Dataset: ").append(trainingRecords).append("</p>");
+        htmlContent.append("<p>Number of records in Validation Dataset: ").append(validationRecords).append("</p>");
+
+        // Log F-score for binary classification
+        htmlContent.append("<h3>F-score for Binary Classification:</h3>");
+        htmlContent.append("<pre>");
+        htmlContent.append("True positives: ").append(truePositives).append("\n");
+        htmlContent.append("False positives: ").append(falsePositives).append("\n");
+        htmlContent.append("False negatives: ").append(falseNegatives).append("\n");
+        htmlContent.append("Precision: ").append(precision).append("\n");
+        htmlContent.append("Recall: ").append(recall).append("\n");
+        htmlContent.append("FScore: ").append(fScore).append("\n");
+        htmlContent.append("</pre>");
+
+        // Include additional details or logs as needed
+
+        htmlContent.append("</body></html>");
+
+        // Write HTML content to the specified file
+        String htmlFilePath = AppConfig.getResourcesDirectoryPath() + "templates/prediction.html";
+        try (FileWriter writer = new FileWriter(htmlFilePath)) {
+            writer.write(htmlContent.toString());
+            System.out.println("Results written to prediction.html");
+        } catch (IOException e) {
+            System.err.println("Error writing results to prediction.html: " + e.getMessage());
+        }
     }
     
     
