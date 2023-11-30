@@ -52,14 +52,49 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.12</artifactId>
             <version>3.5.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>aws-sdk-java-core</artifactId>
+                </exclusion>
+                <!-- Exclude other conflicting dependencies if needed -->
+            </exclusions>
         </dependency>
 
         <!-- AWS SDK dependencies -->
+        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/s3 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.8.3</version>
+            <scope>test</scope>
+        </dependency>
+
+
+          <!-- Hadoop dependencies -->
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>3.3.4</version> <!-- Adjust version if needed -->
+        </dependency>
+
+        <!-- Add exclusions for conflicting AWS SDK versions -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
             <version>2.21.0</version>
-          </dependency>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>apache-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>http-client-spi</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
              
     </dependencies>
 
