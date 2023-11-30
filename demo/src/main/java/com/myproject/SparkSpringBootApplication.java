@@ -34,7 +34,7 @@ import org.springframework.context.annotation.ComponentScan;
 import scala.Tuple2;
 
 @SpringBootApplication
-@ComponentScan(basePackageClasses = {SparkSpringBootApplication.class, AppConfig.class, SparkConfig.class})
+@ComponentScan(basePackageClasses = { SparkSpringBootApplication.class, AppConfig.class, SparkConfig.class })
 public class SparkSpringBootApplication implements CommandLineRunner {
 
     @Autowired
@@ -59,90 +59,80 @@ public class SparkSpringBootApplication implements CommandLineRunner {
     }
 
     @Override
-public void run(String... args) {
-    SparkSession sparkSession = SparkSession.builder().sparkContext(javaSparkContext.sc()).getOrCreate();
+    public void run(String... args) {
+        SparkSession sparkSession = SparkSession.builder().sparkContext(javaSparkContext.sc()).getOrCreate();
 
-    String trainingDataFilePath = "src/main/java/com/myproject/" + TRAINING_DATA_FILE_NAME;
-    String validationDataFilePath = "src/main/java/com/myproject/" + VALIDATION_DATA_FILE_NAME;
+        String trainingDataFilePath = "src/main/java/com/myproject/" + TRAINING_DATA_FILE_NAME;
+        String validationDataFilePath = "src/main/java/com/myproject/" + VALIDATION_DATA_FILE_NAME;
 
-    // Load training data with the specified delimiter and infer the schema
-Dataset<Row> trainingDataSet = sparkSession.read()
-.option("header", "true")
-.option("delimiter", ";")
-.option("inferSchema", "true")  // Automatically infer the schema
-.csv(trainingDataFilePath);
+        // Load training data with the specified delimiter and infer the schema
+        Dataset<Row> trainingDataSet = sparkSession.read().option("header", "true").option("delimiter", ";")
+                .option("inferSchema", "true") // Automatically infer the schema
+                .csv(trainingDataFilePath);
 
-// Manually remove extra quotes from the header
-trainingDataSet = fixCsvHeader(trainingDataSet);
+        // Manually remove extra quotes from the header
+        trainingDataSet = fixCsvHeader(trainingDataSet);
 
-// Load validation data with the specified delimiter and infer the schema
-Dataset<Row> validationDataSet = sparkSession.read()
-.option("header", "true")
-.option("delimiter", ";")
-.option("inferSchema", "true")  // Automatically infer the schema
-.csv(validationDataFilePath);
+        // Load validation data with the specified delimiter and infer the schema
+        Dataset<Row> validationDataSet = sparkSession.read().option("header", "true").option("delimiter", ";")
+                .option("inferSchema", "true") // Automatically infer the schema
+                .csv(validationDataFilePath);
 
-// Manually remove extra quotes from the header
-validationDataSet = fixCsvHeader(validationDataSet);
+        // Manually remove extra quotes from the header
+        validationDataSet = fixCsvHeader(validationDataSet);
 
-  // Log the number of records in training and validation datasets
-  long trainingRecords = trainingDataSet.count();
-  long validationRecords = validationDataSet.count();
-  System.out.println("Number of records in Training Dataset: " + trainingRecords);
-  System.out.println("Number of records in Validation Dataset: " + validationRecords);
+        // Log the number of records in training and validation datasets
+        long trainingRecords = trainingDataSet.count();
+        long validationRecords = validationDataSet.count();
+        System.out.println("Number of records in Training Dataset: " + trainingRecords);
+        System.out.println("Number of records in Validation Dataset: " + validationRecords);
 
+        // Feature engineering: Create inputFeatures column
+        org.apache.spark.ml.feature.VectorAssembler vectorAssembler = new org.apache.spark.ml.feature.VectorAssembler()
+                .setInputCols(new String[] { "fixed acidity", "volatile acidity", "citric acid", "residual sugar",
+                        "chlorides", "free sulfur dioxide", "total sulfur dioxide", "density", "pH", "sulphates",
+                        "alcohol" })
+                .setOutputCol(COLUMN_INPUT_FEATURES);
 
-    // Feature engineering: Create inputFeatures column
-    org.apache.spark.ml.feature.VectorAssembler vectorAssembler = new org.apache.spark.ml.feature.VectorAssembler()
-            .setInputCols(new String[]{
-                    "fixed acidity", "volatile acidity", "citric acid", "residual sugar",
-                    "chlorides", "free sulfur dioxide", "total sulfur dioxide",
-                    "density", "pH", "sulphates", "alcohol"
-            })
-            .setOutputCol(COLUMN_INPUT_FEATURES);
+        trainingDataSet = vectorAssembler.transform(trainingDataSet);
+        validationDataSet = vectorAssembler.transform(validationDataSet);
 
-    trainingDataSet = vectorAssembler.transform(trainingDataSet);
-    validationDataSet = vectorAssembler.transform(validationDataSet);
+        LogisticRegression logisticRegression = new LogisticRegression().setMaxIter(100).setRegParam(0.3)
+                .setElasticNetParam(0.8);
 
-    LogisticRegression logisticRegression = new LogisticRegression()
-            .setMaxIter(100)
-            .setRegParam(0.3)
-            .setElasticNetParam(0.8);
+        logisticRegression.setLabelCol("quality"); // Assuming "quality" is the column to predict
+        logisticRegression.setFeaturesCol(COLUMN_INPUT_FEATURES);
 
-    logisticRegression.setLabelCol("quality");  // Assuming "quality" is the column to predict
-    logisticRegression.setFeaturesCol(COLUMN_INPUT_FEATURES);
+        // Train the model
+        LogisticRegressionModel logisticRegressionModel = logisticRegression.fit(trainingDataSet);
+        LogisticRegressionTrainingSummary logisticRegressionTrainingSummary = logisticRegressionModel.summary();
 
-    // Train the model
-    LogisticRegressionModel logisticRegressionModel = logisticRegression.fit(trainingDataSet);
-    LogisticRegressionTrainingSummary logisticRegressionTrainingSummary = logisticRegressionModel.summary();
+        // Evaluate on the validation set
+        Dataset<Row> validationDataSetPredictions = logisticRegressionModel.transform(validationDataSet);
+        JavaPairRDD<Double, Double> validationPredictionRDD = convertToJavaRDDPair(validationDataSetPredictions);
+        AppConfig.printFScoreBinaryClassfication(validationPredictionRDD);
 
-    // Evaluate on the validation set
-    Dataset<Row> validationDataSetPredictions = logisticRegressionModel.transform(validationDataSet);
-    JavaPairRDD<Double, Double> validationPredictionRDD = convertToJavaRDDPair(validationDataSetPredictions);
-    AppConfig.printFScoreBinaryClassfication(validationPredictionRDD);
+        // Log results and summary
+        System.out.println("Summary of Logistic Regression Model Training:");
+        System.out.println("Number of iterations: " + logisticRegressionTrainingSummary.totalIterations());
+        System.out.println("Objective history: " + Arrays.toString(logisticRegressionTrainingSummary.objectiveHistory()));
 
-    // Log results and summary
-    System.out.println("Summary of Logistic Regression Model Training:");
-    System.out.println("Number of iterations: " + logisticRegressionTrainingSummary.totalIterations());
-    System.out.println("Objective history: " + Arrays.toString(logisticRegressionTrainingSummary.objectiveHistory()));
+        // Log F-score for binary classification
+        System.out.println("F-score for Binary Classification:");
+        AppConfig.printFScoreBinaryClassfication(validationPredictionRDD);
 
-    // Log F-score for binary classification
-    System.out.println("F-score for Binary Classification:");
-    AppConfig.printFScoreBinaryClassfication(validationPredictionRDD);
+        // Log results in prediction.html
+        logResultsToHtml(validationPredictionRDD, trainingRecords, validationRecords);
 
-    // Log results in prediction.html
-    logResultsToHtml(validationPredictionRDD, trainingRecords, validationRecords);
-
-
-    sparkSession.stop();
-}
-
+        sparkSession.stop();
+    }
 
     private JavaPairRDD<Double, Double> convertToJavaRDDPair(Dataset<Row> rowsData) {
         JavaRDD<Row> rowsRdd = rowsData.toJavaRDD();
-        return rowsRdd.mapToPair(row -> new Tuple2<>(row.getDouble(2), row.getDouble(0)));  // Assuming "quality" is at index 2
+        return rowsRdd.mapToPair(row -> new Tuple2<>(row.getDouble(2), row.getDouble(0))); // Assuming "quality" is at
+                                                                                             // index 2
     }
-    
+
     private Dataset<Row> fixCsvHeader(Dataset<Row> dataSet) {
         String[] columns = dataSet.columns();
         for (int i = 0; i < columns.length; i++) {
@@ -183,6 +173,5 @@ validationDataSet = fixCsvHeader(validationDataSet);
             System.err.println("Error writing results to prediction.html: " + e.getMessage());
         }
     }
-    
-    
+
 }
