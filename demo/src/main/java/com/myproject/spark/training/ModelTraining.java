@@ -8,11 +8,16 @@ import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.HttpStatus;
 
+
+@Component
 @Controller
 @RequestMapping("/model-training")
 public class ModelTraining {
@@ -24,14 +29,20 @@ public class ModelTraining {
 
     @PostMapping("/start")
     @ResponseBody
-    public String startTraining() {
-        // Assuming you have a method to load training data
-        Dataset<Row> trainingData = loadTrainingData();
+    public ResponseEntity<String> startTraining() {
+        try {
+            // Assuming you have a method to load training data
+            Dataset<Row> trainingData = loadTrainingData();
 
-        // Start the training process
-        trainLinearRegressionModel(trainingData);
+            // Start the training process
+            trainLinearRegressionModel(trainingData);
 
-        return "Training started successfully";
+            return ResponseEntity.ok("Training started successfully");
+        } catch (Exception e) {
+            // Log the exception
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error starting training: " + e.getMessage());
+        }
     }
 
     // This is just a placeholder method; you should replace it with your actual data loading logic

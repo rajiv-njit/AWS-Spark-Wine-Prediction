@@ -1,4 +1,4 @@
-package com.myproject.data;  // Update with your actual package name
+package com.myproject.data;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -12,8 +12,7 @@ public class DatasetLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatasetLoader.class);
 
-    public static Dataset<Row> loadTrainingDataset(SparkSession spark) {
-        // Load TrainingDataset.csv from AWS S3
+    public Dataset<Row> loadTrainingDataset(SparkSession spark) {
         String trainingDataPath = "s3://s3-inputs-model-training/TrainingDataset.csv";
         LOGGER.info("Loading training dataset from: {}", trainingDataPath);
         Dataset<Row> trainingData = spark.read()
@@ -23,8 +22,7 @@ public class DatasetLoader {
         return trainingData;
     }
 
-    public static Dataset<Row> loadValidationDataset(SparkSession spark) {
-        // Load ValidationDataset.csv from AWS S3
+    public Dataset<Row> loadValidationDataset(SparkSession spark) {
         String validationDataPath = "s3://s3-inputs-model-training/ValidationDataset.csv";
         LOGGER.info("Loading validation dataset from: {}", validationDataPath);
         Dataset<Row> validationData = spark.read()

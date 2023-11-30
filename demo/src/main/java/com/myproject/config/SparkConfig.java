@@ -28,13 +28,10 @@ public class SparkConfig {
                 .setMaster(master)
                 .set("spark.driver.bindAddress", "127.0.0.1")
                 .set("spark.driver.port", "7077");
-
         if (accessKeyId != null && secretKey != null) {
-            // If explicit credentials are provided, set them for S3
             sparkConf.set("spark.hadoop.fs.s3a.access.key", accessKeyId)
-                     .set("spark.hadoop.fs.s3a.secret.key", secretKey);
+                    .set("spark.hadoop.fs.s3a.secret.key", secretKey);
         }
-
         return sparkConf;
     }
 

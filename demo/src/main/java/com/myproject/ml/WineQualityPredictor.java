@@ -1,13 +1,11 @@
 package com.myproject.ml;
 
-import org.apache.spark.ml.Pipeline;
-import org.apache.spark.ml.PipelineModel;
-import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.classification.RandomForestClassifier;
-import org.apache.spark.ml.regression.LinearRegression;
+import org.apache.spark.ml.classification.RandomForestClassificationModel;
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,22 +14,9 @@ import org.springframework.stereotype.Component;
 public class WineQualityPredictor {
     private static final Logger LOGGER = LoggerFactory.getLogger(WineQualityPredictor.class);
 
-    private PipelineModel regressionModel;
-    private final RandomForestClassifierModel randomForestClassifierModel;
-    private final LinearRegressionModel linearRegressionModel;
-    private final LogisticRegressionModel logisticRegressionModel;
+    private RandomForestClassificationModel randomForestClassifierModel;
 
-    public WineQualityPredictor(
-            RandomForestClassifierModel randomForestClassifierModel,
-            LinearRegressionModel linearRegressionModel,
-            LogisticRegressionModel logisticRegressionModel) {
-        // Initialize the models using constructor injection
-        this.randomForestClassifierModel = randomForestClassifierModel;
-        this.linearRegressionModel = linearRegressionModel;
-        this.logisticRegressionModel = logisticRegressionModel;
-    }
-
-    public void trainModels(Dataset<Row> trainingData) {
+    public void trainModel(Dataset<Row> trainingData) {
         try {
             // Assuming features are in columns "fixed acidity" to "alcohol"
             String[] featureColumns = {"fixed acidity", "volatile acidity", "citric acid", "residual sugar", "chlorides",
@@ -42,55 +27,29 @@ public class WineQualityPredictor {
                     .setInputCols(featureColumns)
                     .setOutputCol("features");
 
+            // Transform the training data to include the "features" column
+            Dataset<Row> assembledData = assembler.transform(trainingData);
+
             // Define a RandomForestClassifier model
             RandomForestClassifier rf = new RandomForestClassifier()
                     .setLabelCol("quality") // Set the label column
                     .setFeaturesCol("features");
 
-            // Create a pipeline with the VectorAssembler and RandomForestClassifier
-            Pipeline regressionPipeline = new Pipeline().setStages(new PipelineStage[]{assembler, rf});
-
-            // Fit the entire pipeline to the training data to train the RandomForestClassifier model
-            regressionModel = regressionPipeline.fit(trainingData);
-
-            // Train the Linear Regression model
-            linearRegressionModel.trainModel(trainingData);
-
-            // Train the Logistic Regression model
-            logisticRegressionModel.trainModel(trainingData);
+            // Train the RandomForestClassifier model
+            randomForestClassifierModel = rf.fit(assembledData);
         } catch (Exception e) {
-            LOGGER.error("Error training models: {}", e.getMessage(), e);
-            throw new RuntimeException("Error training models", e);
+            LOGGER.error("Error training model: {}", e.getMessage(), e);
+            throw new RuntimeException("Error training model", e);
         }
     }
 
-    public Dataset<Row> predictRegression(Dataset<Row> data) {
+    public Dataset<Row> predict(Dataset<Row> data) {
         try {
-            // Use the trained RandomForestClassifier model for prediction
-            return regressionModel.transform(data);
+            // Assuming you have a "features" column in your data
+            return randomForestClassifierModel.transform(data);
         } catch (Exception e) {
             LOGGER.error("Error predicting with RandomForestClassifier: {}", e.getMessage(), e);
             throw new RuntimeException("Error predicting with RandomForestClassifier", e);
-        }
-    }
-
-    public Dataset<Row> predictLinearRegression(Dataset<Row> data) {
-        try {
-            // Use the trained Linear Regression model for prediction
-            return linearRegressionModel.predict(data);
-        } catch (Exception e) {
-            LOGGER.error("Error predicting with Linear Regression: {}", e.getMessage(), e);
-            throw new RuntimeException("Error predicting with Linear Regression", e);
-        }
-    }
-
-    public Dataset<Row> predictLogisticRegression(Dataset<Row> data) {
-        try {
-            // Use the trained Logistic Regression model for prediction
-            return logisticRegressionModel.predict(data);
-        } catch (Exception e) {
-            LOGGER.error("Error predicting with Logistic Regression: {}", e.getMessage(), e);
-            throw new RuntimeException("Error predicting with Logistic Regression", e);
         }
     }
 }

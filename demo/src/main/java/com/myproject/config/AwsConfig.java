@@ -6,7 +6,6 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.regions.Region;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,25 +29,19 @@ public class AwsConfig {
     @Bean
     public S3Client s3Client() {
         S3Client s3Client;
-
         if (accessKeyId != null && secretKey != null) {
-            // Use explicit credentials if available
             AwsCredentials awsCredentials = AwsBasicCredentials.create(accessKeyId, secretKey);
             AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(awsCredentials);
-
             s3Client = S3Client.builder()
                     .region(Region.of(region))
                     .credentialsProvider(credentialsProvider)
                     .build();
         } else {
-            // Use default credentials provider
             s3Client = S3Client.builder()
                     .region(Region.of(region))
                     .build();
         }
-
         LOGGER.info("Amazon S3 client created successfully.");
-
         return s3Client;
     }
 }
