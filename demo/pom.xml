@@ -41,17 +41,17 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.12</artifactId>
-            <version>3.5.0</version>
+            <version>${spark.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.12</artifactId>
-            <version>3.5.0</version>
+            <version>${spark.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.12</artifactId>
-            <version>3.5.0</version>
+            <version>${spark.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>software.amazon.awssdk</groupId>
@@ -70,15 +70,17 @@
             <scope>test</scope>
         </dependency>
 
-
-          <!-- Hadoop dependencies -->
-          <dependency>
+        <!-- Hadoop dependencies -->
+        <!-- 
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
-            <version>3.3.4</version> <!-- Adjust version if needed -->
+            <version>3.3.4</version> 
         </dependency>
+        -->
 
         <!-- Add exclusions for conflicting AWS SDK versions -->
+        <!-- 
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
@@ -94,8 +96,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
-             
+        -->
     </dependencies>
 
     <build>
@@ -113,12 +114,13 @@
                 </executions>
             </plugin>
             <!-- Add or modify the Maven Dependency Plugin -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>3.0.0</version>
-        </plugin>
+            <!-- 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            -->
         </plugins>
     </build>
-
 </project>

@@ -9,36 +9,27 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SparkConfig {
 
-    @Value("${spark.app.name}")
-    private String appName;
+   @Value("${spark.app.name}")
+   private String appName;
 
-    @Value("${spark.master}")
-    private String master;
+   @Value("${spark.master}")
+   private String master;
 
-    @Value("${aws_access_key_id:#{null}}")
-    private String accessKeyId;
+   @Bean
+   public SparkConf sparkConf() {
+       SparkConf sparkConf = new SparkConf()
+               .setAppName(appName)
+               .setMaster(master)
+               .set("spark.driver.bindAddress", "127.0.0.1")
+               .set("spark.driver.port", "7077");
 
-    @Value("${aws_secret_access_key:#{null}}")
-    private String secretKey;
+       return sparkConf;
+   }
 
-    @Bean
-    public SparkConf sparkConf() {
-        SparkConf sparkConf = new SparkConf()
-                .setAppName(appName)
-                .setMaster(master)
-                .set("spark.driver.bindAddress", "127.0.0.1")
-                .set("spark.driver.port", "7077");
-        if (accessKeyId != null && secretKey != null) {
-            sparkConf.set("spark.hadoop.fs.s3a.access.key", accessKeyId)
-                    .set("spark.hadoop.fs.s3a.secret.key", secretKey);
-        }
-        return sparkConf;
-    }
-
-    @Bean
-    public SparkSession sparkSession(SparkConf sparkConf) {
-        return SparkSession.builder()
-                .config(sparkConf)
-                .getOrCreate();
-    }
+   @Bean
+   public SparkSession sparkSession(SparkConf sparkConf) {
+       return SparkSession.builder()
+               .config(sparkConf)
+               .getOrCreate();
+   }
 }
