@@ -6,9 +6,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-
 import java.io.IOException;
-
 
 public class SparkWineModelTrainer {
 
@@ -23,7 +21,7 @@ public class SparkWineModelTrainer {
             System.out.println("Training Logistic Regression Model...");
 
             // Initial Training
-            Dataset<Row> wineDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "s3://s3-inputs-model-training/TrainingDataset.csv");
+            Dataset<Row> wineDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "Datasets/TrainingDataset.csv");
             Dataset<Row> assemblyResult = Utility.assembleDataframe(wineDataFrame);
 
             LogisticRegression logisticRegression = new LogisticRegression()
@@ -36,7 +34,7 @@ public class SparkWineModelTrainer {
             System.out.println("Validating Trained Model");
 
             // Validating Trained Model
-            Dataset<Row> validationDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "s3://s3-inputs-model-training/ValidationDataset.csv");
+            Dataset<Row> validationDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "Datasets/ValidationDataset.csv");
             Dataset<Row> assembledValidationDataFrame = Utility.assembleDataframe(validationDataFrame);
             Dataset<Row> modelTransformationResult = Utility.transformDataframeWithModel(lrModel, assembledValidationDataFrame);
 

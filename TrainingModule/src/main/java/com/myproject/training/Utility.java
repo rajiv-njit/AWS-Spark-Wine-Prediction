@@ -36,12 +36,18 @@ public class Utility {
         String executorMemory = properties.getProperty("spark.executor.memory", "1g");
 
         SparkSession session = SparkSession.builder()
-                .appName(APP_NAME)
-                .master(masterUrl)
-                .config("spark.executor.instances", executorInstances)
-                .config("spark.executor.cores", executorCores)
-                .config("spark.executor.memory", executorMemory)
-                .getOrCreate();
+    .appName("Wine-Quality-Prediction")
+    .master(masterUrl)
+    .config("spark.executor.instances", executorInstances)
+    .config("spark.executor.cores", executorCores)
+    .config("spark.executor.memory", executorMemory)
+    // Set AWS S3 access configurations for public bucket
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+    .config("spark.hadoop.fs.s3a.path.style.access", "true")
+    .config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.AnonymousAWSCredentialsProvider")
+    .getOrCreate();
+
+
 
         session.sparkContext().setLogLevel("OFF");
         return session;
