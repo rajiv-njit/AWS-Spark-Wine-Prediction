@@ -2,50 +2,42 @@ package com.myproject.prediction;
 
 import java.io.IOException;
 
-import org.apache.spark.ml.classification.LogisticRegressionModel;
+import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-
 public class SparkWineQualityPredictor {
 
     public static void main(String[] args) {
-        System.out.println("Initializing Spark:");
+        System.out.println("Wine Quality Prediction Application");
 
-        SparkSession sparkSession = null;
-        try {
-            sparkSession = Utility.initializeSparkSession("/home/hadoop/spark-config.properties");
+        if (args.length < 1) {
+            System.err.println("Usage: SparkWineQualityPredictor <test data file path>");
+            System.exit(1);
+        }
 
-            System.out.println("Loading Test Data Set");
+        String testDataFilePath = args[0];
 
-            // Load Test Dataframe
-            Dataset<Row> testingDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "../Datasets/TestDataset.csv");
-            Dataset<Row> assembledTestDataFrame = Utility.assembleDataframe(testingDataFrame);
+        try (SparkSession sparkSession = Utility.initializeSparkSession("spark-config.properties")) {
+            // Load the trained model
+            PipelineModel model = PipelineModel.load("/app/data/model");
 
-            System.out.println("Loading Training Model");
+            // Read the test data
+            Dataset<Row> testData = Utility.readDataframeFromCsvFile(sparkSession, testDataFilePath);
 
-            // Load Training Model
-            LogisticRegressionModel lrModel = LogisticRegressionModel.load("model");
+            // Assemble the test data
+            Dataset<Row> assembledTestData = Utility.assembleDataframe(testData);
 
-            System.out.println("Predicting using Trained Model and Test Data");
+            // Make predictions
+            Dataset<Row> predictions = model.transform(assembledTestData);
 
-            // Predict using Test Dataframe
-            Dataset<Row> predictionData = Utility.transformDataframeWithModel(lrModel, assembledTestDataFrame);
+            // Show predictions
+            predictions.show();
 
-            predictionData.show();
-
-            System.out.println("Evaluation Results:");
-
-            Utility.evaluateAndSummarizeDataModel(predictionData);
-
+            sparkSession.stop();
         } catch (IOException e) {
             e.printStackTrace();
-            // Handle the exception appropriately
-        } finally {
-            if (sparkSession != null) {
-                sparkSession.stop();
-            }
         }
     }
 }

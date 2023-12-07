@@ -1,4 +1,2 @@
-*.jar
 .DS_Store
-my-docker-image.tar
 KeyPair_EC2_PA1_01.pem
