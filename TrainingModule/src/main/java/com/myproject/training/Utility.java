@@ -1,19 +1,25 @@
 package com.myproject.training;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
-
-import org.apache.spark.ml.classification.LogisticRegressionModel;
+import org.apache.spark.ml.PredictionModel;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Properties;
+
+import java.io.File;
 
 public class Utility {
-
     public static final String APP_NAME = "Wine-Quality-Prediction";
+    public static final String HTML_OUTPUT_PATH = "model-evaluation-results.html";
 
     // Update feature column names to match CSV file format
     public static final String[] FEATURE_COLUMNS = {
@@ -21,8 +27,6 @@ public class Utility {
         "chlorides", "free sulfur dioxide", "total sulfur dioxide", 
         "density", "pH", "sulphates", "alcohol"
     };
-    
-
 
     public static SparkSession initializeSparkSession(String propertiesFilePath) throws IOException {
         Properties properties = new Properties();
@@ -53,36 +57,59 @@ public class Utility {
                 .option("delimiter", ";")
                 .option("inferSchema", true)
                 .csv(path);
-    
-        // Rename columns to remove extra quotes
-        for (String column : df.columns()) {
-            df = df.withColumnRenamed(column, column.replace("\"", ""));
+
+        // Sanitize column names
+        StructType schema = df.schema();
+        for (StructField field : schema.fields()) {
+            String newName = field.name().replaceAll("\"", "");
+            df = df.withColumnRenamed(field.name(), newName);
         }
-    
+
         return df;
     }
-    
 
     public static Dataset<Row> assembleDataframe(Dataset<Row> dataframe) {
         VectorAssembler vectorAssembler = new VectorAssembler()
                 .setInputCols(FEATURE_COLUMNS)
                 .setOutputCol("features");
-        Dataset<Row> assemblerResult = vectorAssembler.transform(dataframe);
-        return assemblerResult.select("quality", "features");
+        return vectorAssembler.transform(dataframe).select("quality", "features");
     }
 
-    public static void evaluateAndSummarizeDataModel(Dataset<Row> dataFrame) {
+    public static String evaluateAndSummarizeDataModel(Dataset<Row> predictions, String modelName) {
         MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
                 .setLabelCol("quality")
                 .setPredictionCol("prediction");
+    
+        double accuracy = evaluator.setMetricName("accuracy").evaluate(predictions);
+        double f1Score = evaluator.setMetricName("f1").evaluate(predictions);
+    
+        System.out.println("Evaluation Results for " + modelName + ":");
+        System.out.println("Accuracy = " + accuracy);
+        System.out.println("F1 Score = " + f1Score);
+    
+        return "<h3>" + modelName + " Evaluation Results:</h3>"
+             + "<p>Accuracy = " + accuracy + "<br>F1 Score = " + f1Score + "</p>";
+    }
+    
 
-        double accuracy = evaluator.setMetricName("accuracy").evaluate(dataFrame);
-        double f1 = evaluator.setMetricName("f1").evaluate(dataFrame);
-        System.out.println("Model Accuracy:  " + accuracy);
-        System.out.println("F1 Score: " + f1);
+    public static void appendResultsToHtmlFile(String modelName, double accuracy, double f1Score) throws IOException {
+        String htmlContent = "<h3>" + modelName + " Evaluation Results:</h3>"
+                           + "<p>Accuracy = " + accuracy + "<br>F1 Score = " + f1Score + "</p>";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HTML_OUTPUT_PATH, true))) {
+            writer.write(htmlContent);
+        }
     }
 
-    public static Dataset<Row> transformDataframeWithModel(LogisticRegressionModel model, Dataset<Row> dataFrame) {
+    public static void writeResultsToHtmlFile(String htmlContent) throws IOException {
+        File outputFile = new File(HTML_OUTPUT_PATH);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, true))) {
+            writer.write(htmlContent);
+        }
+        System.out.println("Output file written to: " + outputFile.getAbsolutePath());
+    } 
+
+    public static Dataset<Row> transformDataframeWithModel(PredictionModel<?, ?> model, Dataset<Row> dataFrame) {
         return model.transform(dataFrame).select("features", "quality", "prediction");
     }
 }
