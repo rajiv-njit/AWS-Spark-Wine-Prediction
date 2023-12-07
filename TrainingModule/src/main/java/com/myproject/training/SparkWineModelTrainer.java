@@ -10,16 +10,25 @@ public class SparkWineModelTrainer {
     public static void main(String[] args) {
         System.out.println("Model Training Application");
 
+        if (args.length < 3) {
+            System.err.println("Usage: SparkWineModelTrainer <config file path> <training dataset path> <validation dataset path>");
+            System.exit(1);
+        }
+
+        String configFilePath = args[0];
+        String trainingDataPath = args[1];
+        String validationDataPath = args[2];
+
         StringBuilder htmlResults = new StringBuilder();
         SparkSession sparkSession = null;
         try {
             System.out.println("Initializing Spark:");
-            sparkSession = Utility.initializeSparkSession("/home/hadoop/spark-config.properties");
+            sparkSession = Utility.initializeSparkSession(configFilePath);
 
             // Read Training and Validation Data
-            Dataset<Row> wineDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "Datasets/TrainingDataset.csv");
+            Dataset<Row> wineDataFrame = Utility.readDataframeFromCsvFile(sparkSession, trainingDataPath);
             Dataset<Row> assemblyResult = Utility.assembleDataframe(wineDataFrame);
-            Dataset<Row> validationDataFrame = Utility.readDataframeFromCsvFile(sparkSession, "Datasets/ValidationDataset.csv");
+            Dataset<Row> validationDataFrame = Utility.readDataframeFromCsvFile(sparkSession, validationDataPath);
             Dataset<Row> assembledValidationDataFrame = Utility.assembleDataframe(validationDataFrame);
 
             // Train Logistic Regression Model
@@ -51,6 +60,21 @@ public class SparkWineModelTrainer {
 
             // Write accumulated results to HTML file
             Utility.writeResultsToHtmlFile(htmlResults.toString());
+
+            // Save and Log Logistic Regression Model
+            String lrModelPath = "models/logisticRegressionModel";
+            lrModel.write().overwrite().save(lrModelPath);
+            System.out.println("Logistic Regression Model saved to: " + lrModelPath);
+
+            // Save and Log Random Forest Model
+            String rfModelPath = "models/randomForestModel";
+            rfModel.write().overwrite().save(rfModelPath);
+            System.out.println("Random Forest Model saved to: " + rfModelPath);
+
+            // Save and Log Decision Tree Model
+            String dtModelPath = "models/decisionTreeModel";
+            dtModel.write().overwrite().save(dtModelPath);
+            System.out.println("Decision Tree Model saved to: " + dtModelPath);
 
         } catch (Exception e) {
             e.printStackTrace();
