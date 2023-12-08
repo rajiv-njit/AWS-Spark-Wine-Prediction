@@ -23,4 +23,6 @@ COPY PredictionModule/src/main/java/com/myproject/prediction/spark-config.proper
 COPY Datasets /Datasets
 
 # Define the command to run your application
-ENTRYPOINT ["sh", "-c", "java -cp /app/PredictionModule.jar:/opt/spark/jars/* com.myproject.prediction.SparkWineQualityPredictor"]
+ENTRYPOINT ["java", "-cp", "/app/PredictionModule.jar:/opt/spark/jars/*", "com.myproject.prediction.SparkWineQualityPredictor"]
+
+
