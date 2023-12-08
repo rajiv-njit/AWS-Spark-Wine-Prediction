@@ -1,10 +1,11 @@
-Main Requirements
+# Main Requirements
 1. Execution of training application WITHOUT DOCKER and directly on the instance.
 2. Execution of prediction application WITHOUT DOCKER and directly on the instance.
 3. Execution of prediction application WITH DOCKER.
 
-Prerequisites:
-A. Installing Java and Apache Spark on EC2 at EC2 instance (Amazon Linux)
+## Prerequisites:
+
+**A. Installing Java and Apache Spark on EC2 at EC2 instance (Amazon Linux)**
  -  Update System Packages: sudo yum update
  -  Install Java: sudo yum install -y java-1.8.0-openjdk-devel
  -  Download Apache Spark:curl -SL https://archive.apache.org/dist/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz -o spark-3.4.1-bin-hadoop3.tgz
@@ -16,10 +17,11 @@ A. Installing Java and Apache Spark on EC2 at EC2 instance (Amazon Linux)
 - Check Java installation:java -version
 - Check Spark installation by running a Spark shell: $SPARK_HOME/bin/spark-shell
 - Search for Available Java Packages:
-- First, search the repositories for available Java packages:sudo yum search java | grep openjdkThis command will list available Java packages. - Look for a JDK package that suits your needs (preferably version 1.8 or newer).
+- First, search the repositories for available Java packages:sudo yum search java | grep openjdk This command will list available Java packages. - Look for a JDK package that suits your needs (preferably version 1.8 or newer).
 
 
-    Let’s check Linus version:
+**Let’s check Linus version:**
+
 [ec2-user@ip-172-31-87-80 ~]$ uname -a
 Linux ip-172-31-87-80.ec2.internal 6.1.61-85.141.amzn2023.x86_64 #1 SMP PREEMPT_DYNAMIC Wed Nov  8 00:39:18 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux
 [ec2-user@ip-172-31-87-80 ~]$ hostnamectl
@@ -37,27 +39,27 @@ Operating System: Amazon Linux 2023
   Hardware Model: HVM domU
 Firmware Version: 4.11.amazon
 
-Update the System:
-First, update your system to ensure all your packages are up to date: sudo yum update -y
+**Update the System:**
+
+- First, update your system to ensure all your packages are up to date: sudo yum update -y
 Search for Available Java Packages:
 You can search for available Java packages by running: sudo yum list java*
-This command will list all Java-related packages available for installation. Look for the OpenJDK packages.
-it looks like Amazon Corretto, Amazon's own distribution of the OpenJDK, is available for installation. 
-Install Amazon Corretto 8: sudo yum install -y java-1.8.0-amazon-corretto
-Install Java Development Kit (JDK):
-Once you've identified the appropriate package, install it using yum. 
-For example, if you find java-1.8.0-openjdk, you can install it with:sudo yum install -y java-1.8.0-openjdk
+
+- This command will list all Java-related packages available for installation. Look for the OpenJDK packages. it looks like Amazon Corretto, Amazon's own distribution of the OpenJDK, is available for installation. 
+- Install Amazon Corretto 8: sudo yum install -y java-1.8.0-amazon-corretto
+Install Java Development Kit (JDK): Once you've identified the appropriate package, install it using yum. 
+- For example, if you find java-1.8.0-openjdk, you can install it with:sudo yum install -y java-1.8.0-openjdk
 Verify the Installation: After installation, you can verify that Java is installed correctly by running: java -version
 
 
-B. Understanding of Installing Docker steps on EC2
+**B. Understanding of Installing Docker steps on EC2**
  - Connected to the EC2 instance, 
    - update the package repository: sudo yum update -y (Amazon Linux) 
    - Install Docker: sudo yum install docker (Amazon Linux) or sudo apt-get install docker.io (Ubuntu).
    - Start the Docker service: sudo service docker start
    - Add the ec2-user to the docker group to execute Docker commands without using sudo: sudo usermod -a -G docker ec2-user
 
-C. Github Settings - Configuring Docker Hub Credentials in GitHub Repository
+**C. Github Settings - Configuring Docker Hub Credentials in GitHub Repository**
 - Add Docker Hub Username as a Secret:
   - Go to your GitHub repository's "Settings".
   - Navigate to "Security" > "Secrets".
@@ -68,9 +70,90 @@ C. Github Settings - Configuring Docker Hub Credentials in GitHub Repository
   - Enter your Docker Hub password and save it.
 . Docker Hub Setting
 
+### 1. Execution of Training Application WITHOUT DOCKER on the EC2 Instance:
+
+- Transfer the TrainingModule-2.0.0.jar and the spark-config.properties file to your EC2 instance.
+- Ensure that Java and Apache Spark are installed on the EC2 instance.
+- Run the training application using the command:
+Execution of Training Application WITHOUT DOCKER
+- Transfer the Training Module: Use SCP (Secure Copy Protocol) to transfer TrainingModule-2.0.0.jar and spark-config.properties to your EC2 instance. : 
+  - scp -i KeyPair_EC2_PA1_01.pem TrainingModule/target/TrainingModule-2.0.0.jar ec2-user@ec2-44-205-252-200.compute-1.amazonaws.com:/home/ec2-user
+  - scp -i KeyPair_EC2_PA1_01.pem TrainingModule/src/main/java/com/myproject/training/spark-config.properties ec2-user@ec2-44-205-252-200.compute-1.amazonaws.com:/home/ec2-user
 
 
-3. Execution of prediction application WITH DOCKER.
+- Run Java command To start Training Application
+
+  - [ec2-user@ip-172-31-87-80 ~]$ java -cp /home/ec2-user/TrainingModule-2.0.0.jar:/home/ec2-user/spark-3.4.1-bin-hadoop3/jars/* \
+     com.myproject.training.SparkWineModelTrainer \
+     /home/ec2-user/spark-config.properties \
+     /home/ec2-user/Datasets/TrainingDataset.csv \
+     /home/ec2-user/Datasets/ValidationDataset.csv
+
+     The output on console will be like below
+
+        Model Training Application
+        Initializing Spark:
+        Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+        23/12/07 17:45:52 INFO SparkContext: Running Spark version 3.4.1
+        23/12/07 17:45:53 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+        23/12/07 17:45:53 INFO ResourceUtils: ==============================================================
+        23/12/07 17:45:53 INFO ResourceUtils: No custom resources configured for spark.driver.
+        23/12/07 17:45:53 INFO ResourceUtils: ==============================================================
+        23/12/07 17:45:53 INFO SparkContext: Submitted application: Wine-Quality-Prediction
+        23/12/07 17:45:53 INFO ResourceProfile: Default ResourceProfile 
+        23/12/07 17:45:54 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, ip-172-31-87-80.ec2.internal, 34675, None)
+        Training Logistic Regression Model...
+        Evaluation Results for Logistic Regression:
+        Accuracy = 0.54375
+        F1 Score = 0.49057146935668056
+        Training Random Forest Model...
+        Evaluation Results for Random Forest:
+        Accuracy = 0.53125
+        F1 Score = 0.5004527608915907
+        Training Decision Tree Model...
+        Evaluation Results for Decision Tree:
+        Accuracy = 0.48125
+        F1 Score = 0.462126100440176
+        Output file written to: /home/ec2-user/model-evaluation-results.html
+        Logistic Regression Model saved to: models/logisticRegressionModel
+        Random Forest Model saved to: models/randomForestModel
+        Decision Tree Model saved to: models/decisionTreeModel
+
+
+
+  - [ec2-user@ip-172-31-87-80 ~]$ ls
+    - Datasets  TrainingModule-2.0.0.jar  model-evaluation-results.html  spark-3.4.1-bin-hadoop3  spark-3.4.1-bin-hadoop3.tgz  spark-config.properties
+  - [ec2-user@ip-172-31-87-80 ~]$ cat model-evaluation-results.html 
+    - <h3>Logistic Regression Evaluation Results:</h3><p>Accuracy = 0.54375<br>F1 Score = 0.49057146935668056</p><h3>Random Forest Evaluation Results:</h3><p>Accuracy = 0.53125<br>F1 Score = 0.5004527608915907</p><h3>Decision Tree Evaluation Results:</h3><p>Accuracy = 0.48125<br>F1 Score = 0.462126100440176</p>[ec2-user@ip-172-31-87-80 ~]$ 
+
+### 2. Execution of Prediction Application WITHOUT DOCKER on the EC2 Instance:
+
+  - Transfer the PredictionModule-2.0.0.jar, the trained model, and the spark-config.properties file to your EC2 instance.
+    - rajivkumar@MacbookProHost AWS-Spark-Wine-Prediction % scp -i KeyPair_EC2_PA1_01.pem PredictionModule/target/PredictionModule-2.0.0.jar ec2-user@ec2-44-203-152-220.compute-1.amazonaws.com:/home/ec2-user 
+
+  - Ensure to have output folder created at EC2-User home directory as below 
+    - [ec2-user@ip-172-31-87-80 ~]$ sudo mkdir -p prediction-results/
+    - [ec2-user@ip-172-31-87-80 ~]$ sudo chown -R ec2-user:ec2-user prediction-results/
+
+ - run the Prediction application
+    - [ec2-user@ip-172-31-87-80 ~]$ java -cp /home/ec2-user/PredictionModule-2.0.0.jar:/home/ec2-user/spark-3.4.1-bin-hadoop3/jars/* com.myproject.prediction.SparkWineQualityPredictor /home/ec2-user/spark-config.properties /home/ec2-user/Datasets/TestDataset.csv /home/ec2-user/models /home/ec2-user/prediction-results/
+
+          Wine Quality Prediction Application
+          Dec 07, 2023 10:54:20 PM com.myproject.prediction.SparkWineQualityPredictor main
+          INFO: Reading test data from: /home/ec2-user/Datasets/TestDataset.csv
+          Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+          23/12/07 22:54:21 INFO SparkContext: Running Spark version 3.4.1
+          .....
+          ....
+
+[ec2-user@ip-172-31-87-80 prediction-results]$ cat prediction-evaluation-results-202312072254.txt 
+Logistic Regression F1 Score: 0.49057146935668056
+Random Forest F1 Score: 0.5004527608915907
+Decision Tree F1 Score: 0.462126100440176
+[ec2-user@ip-172-31-87-80 prediction-results]$ 
+
+
+### 3. Execution of prediction application WITH DOCKER.
 
 **3.1 Connect to Running EC2 Instance through SSH**
 
@@ -94,10 +177,10 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
 
 **3.2 Update the Linux AMI system and Install Java**
 
-    - Update your system to ensure all your packages are up to date: sudo yum update -y
-    - Search for Available Java Packages:sudo yum list java*
-    - Install Amazon Corretto 8: sudo yum install -y java-1.8.0-amazon-corretto
-    - Verify the Installation: After installation, you can verify that Java is installed correctly by running: java -version
+- Update your system to ensure all your packages are up to date: sudo yum update -y
+- Search for Available Java Packages:sudo yum list java*
+- Install Amazon Corretto 8: sudo yum install -y java-1.8.0-amazon-corretto
+- Verify the Installation: After installation, you can verify that Java is installed correctly by running: java -version
 
         [ec2-user@ip-172-31-84-5 ~]$ java -version
         openjdk version "1.8.0_392"
@@ -107,12 +190,12 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
 
 **3.3 Install Docker on EC2 (Amazon LINUX)**
 
-    - Update the package repository: sudo yum update -y  
-    - Install Docker: sudo yum install docker  
-    - Start the Docker service: sudo service docker start
-    - Add the ec2-user to the docker group to execute Docker commands without using sudo: sudo usermod -a -G docker ec2-user
+- Update the package repository: sudo yum update -y  
+- Install Docker: sudo yum install docker  
+- Start the Docker service: sudo service docker start
+- Add the ec2-user to the docker group to execute Docker commands without using sudo: sudo usermod -a -G docker ec2-user
 
-    IMPORTANT - exit from ssh EC2 and rejoin so that you will have permission to run docker pull after the above changes. 
+**IMPORTANT -** exit from ssh EC2 and rejoin so that you will have permission to run docker pull after the above changes. 
 
     [ec2-user@ip-172-31-84-5 ~]$ sudo service docker start
     Redirecting to /bin/systemctl start docker.service
@@ -162,8 +245,9 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
 
 **3.5 Pull the Docker Images:**
 
-    -> docker pull yourdockerhubusername/training-module:latest
-    -> docker pull yourdockerhubusername/prediction-module:latest
+-> docker pull yourdockerhubusername/training-module:latest
+
+-> docker pull yourdockerhubusername/prediction-module:latest
  
      $ docker pull rajivnjit/training-module:latest
      $ docker pull rajivnjit/prediction-module:latest
@@ -172,16 +256,6 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
     latest: Pulling from rajivnjit/training-module
     001c52e26ad5: Pull complete 
     d9d4b9b6e964: Pull complete 
-    2068746827ec: Pull complete 
-    9daef329d350: Pull complete 
-    d85151f15b66: Pull complete 
-    52a8c426d30b: Pull complete 
-    8754a66e0050: Pull complete 
-    cca611dc1e63: Pull complete 
-    f6e389e02196: Pull complete 
-    1af51a5ffea8: Pull complete 
-    15bb4c6cd22e: Pull complete 
-    e63e9cd5dc45: Pull complete 
     fb389354657d: Pull complete 
     Digest: sha256:316890f2ec9dbd4116146ee76b7e6693e87acc0bbba4ed9853428adb120d2989
     Status: Downloaded newer image for rajivnjit/training-module:latest
@@ -192,18 +266,9 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
     latest: Pulling from rajivnjit/prediction-module
     001c52e26ad5: Already exists 
     d9d4b9b6e964: Already exists 
-    2068746827ec: Already exists 
-    9daef329d350: Already exists 
-    d85151f15b66: Already exists 
-    52a8c426d30b: Already exists 
-    8754a66e0050: Already exists 
-    cca611dc1e63: Already exists 
     f6e389e02196: Already exists 
     1af51a5ffea8: Already exists 
     b39a61e109fb: Pull complete 
-    6529ddce31bc: Pull complete 
-    27dd111d6ed0: Pull complete 
-    fb389354657d: Pull complete 
     Digest: sha256:b1021d817426c3c3cafde9df9d872806ddfe7dfc922ca843005b1cc4430cd591
     Status: Downloaded newer image for rajivnjit/prediction-module:latest
     docker.io/rajivnjit/prediction-module:latest
@@ -211,15 +276,15 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
 
 **3.6 Run the Training Module:** 
 
-    Important note: 
-    a. Docker container for the Training Module requires three arguments 
-       - a configuration file path, 
-       - training dataset path, and 
-       - model output directory path
-       
-        You need to include these arguments when running the Docker command.
+**Important note:** 
+- **a.** Docker container for the Training Module requires three arguments 
+    - a configuration file path, 
+    - training dataset path, and 
+    - model output directory path
 
-    b. Let's create required Directory Structure at EC2 and bring the required Config file, Training Files and model output Directory
+You need to include these arguments when running the Docker command.
+
+- **b.** Let's create required Directory Structure at EC2 and bring the required Config file, Training Files and model output Directory
 
         At EC2
             $ sudo mkdir -p prediction-results/
@@ -237,15 +302,16 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
             $ cp spark-config.properties /app/data/
 
 
-        From Local Machine or Github Training Module, Copy SparkConfig to EC2, Training and Validation CSV
+    From Local Machine or Github Training Module, Copy SparkConfig to EC2, Training and Validation CSV
         (I have copied from Local to EC2)
 
         rajivkumar@MacbookProHost AWS-Spark-Wine-Prediction % scp -i KeyPair_EC2_PA1_01.pem Datasets/TrainingDataset.csv ec2-user@ec2-54-162-96-209.compute-1.amazonaws.com:/home/ec2-user/Datasets
    
         rajivkumar@MacbookProHost AWS-Spark-Wine-Prediction % scp -i KeyPair_EC2_PA1_01.pem Datasets/ValidationDataset.csv ec2-user@ec2-54-162-96-209.compute-1.amazonaws.com:/home/ec2-user/Datasets 
 
-        Make Sure that you have below Directory and File Structure :  the files are correctly mounted in the Docker container. 
-        The paths /app/data/spark-config.properties, /app/data/Datasets/TrainingDataset.csv, and /app/data/Datasets/ValidationDataset.csv inside the container have the necessary files.
+    Make Sure that you have below Directory and File Structure :  the files are correctly mounted in the Docker container. 
+    
+    The paths /app/data/spark-config.properties, /app/data/Datasets/TrainingDataset.csv, and /app/data/Datasets/ValidationDataset.csv inside the container have the necessary files.
 
             [ec2-user@ip-172-31-84-5 data]$ pwd
             /app/data
@@ -260,15 +326,55 @@ Warning: Permanently added 'ec2-54-162-96-209.compute-1.amazonaws.com' (ED25519)
             [ec2-user@ip-172-31-84-5 data]$ 
 
 
-    $  docker run -v /home/ec2-user:/app/data rajivnjit/training-module:latest /app/data/spark-config.properties /app/data/Datasets/TrainingDataset.csv /app/data/Datasets/ValidationDataset.csv
+    [ec2-user@ip-172-31-84-5 ~]$ docker run -v /home/ec2-user:/app/data rajivnjit/training-module:latest /app/data/spark-config.properties /app/data/Datasets/TrainingDataset.csv /app/data/Datasets/ValidationDataset.csv
+        
+    **Model Training Application**
 
-    docker run -v /home/ec2-user:/app/data rajivnjit/training-module:latest /app/data/spark-config.properties /app/data/Datasets/TrainingDataset.csv /app/data/Datasets/ValidationDataset.csv
+        Initializing Spark:
+        Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+        23/12/08 02:31:51 INFO SparkContext: Running Spark version 3.4.1
+        ......
+        ......
+        Training Logistic Regression Model...
+        Evaluation Results for Logistic Regression:
+        Accuracy = 0.54375
+        F1 Score = 0.49057146935668056
+        Training Random Forest Model...
+        Evaluation Results for Random Forest:
+        Accuracy = 0.53125
+        F1 Score = 0.5004527608915907
+        Training Decision Tree Model...
+        Evaluation Results for Decision Tree:
+        Accuracy = 0.48125
+        F1 Score = 0.462126100440176
+        Output file written to: /model-evaluation-results.html
+        Logistic Regression Model saved to: models/logisticRegressionModel
+        Random Forest Model saved to: models/randomForestModel
+        Decision Tree Model saved to: models/decisionTreeModel
 
 
-    Note - Above command correctly maps our EC2 instance's /home/ec2-user directory to /app/data inside the container, and the files seem to be accessible at the expected paths within the container.
 
 
+**Note -** Above command correctly maps our EC2 instance's /home/ec2-user directory to /app/data inside the container, and the files seem to be accessible at the expected paths within the container.
 
+For Prediction Applicaiton, I did not have TestData but copied Validation into TestData to test as instructed by Professor
 
+    [ec2-user@ip-172-31-84-5 ~]$ cd /app/data/Datasets
+    [ec2-user@ip-172-31-84-5 Datasets]$ ls
+    TrainingDataset.csv  ValidationDataset.csv
+    [ec2-user@ip-172-31-84-5 Datasets]$ cp ValidationDataset.csv TestDataset.csv
 
+Then, come back to Home Directory of EC2-User and run application
 
+    [ec2-user@ip-172-31-84-5 ~]$ sudo mkdir -p /app/data/prediction-results
+    [ec2-user@ip-172-31-84-5 ~]$ sudo chown -R ec2-user:ec2-user /app/data/prediction-results/
+
+    [ec2-user@ip-172-31-84-5 Datasets]$ ls -lrt
+        total 92
+        -rw-r--r--. 1 ec2-user ec2-user 68804 Dec  8 01:24 TrainingDataset.csv
+        -rw-r--r--. 1 ec2-user ec2-user  8760 Dec  8 01:25 ValidationDataset.csv
+        -rw-r--r--. 1 ec2-user ec2-user  8760 Dec  8 02:46 TestDataset.csv
+        [ec2-user@ip-172-31-84-5 Datasets]$ pwd
+        /home/ec2-user/Datasets
+
+    docker run -v /home/ec2-user:/app/data rajivnjit/prediction-module:latest /app/data/spark-config.properties /app/data/Datasets/TestDataset.csv /app/data/models /app/data/prediction-results
