@@ -20,4 +20,5 @@ COPY TrainingModule/src/main/java/com/myproject/training/spark-config.properties
 COPY Datasets /Datasets
 
 # Define the command to run your application
-ENTRYPOINT ["sh", "-c", "java -cp /app/TrainingModule.jar:/opt/spark/jars/* com.myproject.training.SparkWineModelTrainer"]
+ENTRYPOINT ["java", "-cp", "/app/TrainingModule.jar:/opt/spark/jars/*", "com.myproject.training.SparkWineModelTrainer"]
+
