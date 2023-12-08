@@ -20,7 +20,7 @@
 - First, search the repositories for available Java packages:sudo yum search java | grep openjdk This command will list available Java packages. - Look for a JDK package that suits your needs (preferably version 1.8 or newer).
 
 
-**Let’s check Linus version:**
+**Let’s check Linux version:**
 
 [ec2-user@ip-172-31-87-80 ~]$ uname -a
 Linux ip-172-31-87-80.ec2.internal 6.1.61-85.141.amzn2023.x86_64 #1 SMP PREEMPT_DYNAMIC Wed Nov  8 00:39:18 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux
